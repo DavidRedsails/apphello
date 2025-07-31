@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公司差旅费用分析报表</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .section-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .section-header h2 {
+            color: #495057;
+            font-size: 1.5em;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            padding: 20px;
+        }
+        
+        .chart {
+            width: 100%;
+            height: 500px;
+            margin-bottom: 20px;
+        }
+        
+        .analysis-text {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        
+        .analysis-text h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        .analysis-text ul {
+            padding-left: 20px;
+        }
+        
+        .analysis-text li {
+            margin-bottom: 8px;
+            color: #6c757d;
+        }
+        
+        .department-selector {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .department-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .dept-btn {
+            padding: 10px 20px;
+            border: 2px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .dept-btn.active {
+            background: #007bff;
+            color: white;
+        }
+        
+        .dept-btn:hover {
+            background: #0056b3;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 1.1em;
+        }
+        
+        .error {
+            text-align: center;
+            padding: 50px;
+            color: #dc3545;
+            font-size: 1.1em;
+        }
+        
+        .insights {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            margin-top: 40px;
+        }
+        
+        .insights .section-header {
+            background: rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .insights .section-header h2 {
+            color: white;
+        }
+        
+        .insights-content {
+            padding: 30px;
+        }
+        
+        .insights-content h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .insights-content p {
+            margin-bottom: 15px;
+            line-height: 1.8;
+        }
+        
+        .insights-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .insights-list li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .insights-list li:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: rgba(255,255,255,0.8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>公司差旅费用分析报表</h1>
+            <p>数据期间：2024年1月 - 2025年6月</p>
+        </div>
+        
+        <!-- 1. 公司整体差旅金额 -->
+        <div class="section">
+            <div class="section-header">
+                <h2>1. 公司整体差旅金额趋势分析</h2>
+            </div>
+            <div class="chart-container">
+                <div id="overall-chart" class="chart"></div>
+            </div>
+        </div>
+        
+        <!-- 2. 年度同比分析 -->
+        <div class="section">
+            <div class="section-header">
+                <h2>2. 年度同比分析（2024年 vs 2025年 1-6月）</h2>
+            </div>
+            <div class="chart-container">
+                <div id="comparison-chart" class="chart"></div>
+            </div>
+        </div>
+        
+        <!-- 3. 异常差旅月份分析 -->
+        <div class="section">
+            <div class="section-header">
+                <h2>3. 异常差旅月份分析</h2>
+            </div>
+            <div class="analysis-text">
+                <h3>环比或同比变化率超过10%的异常月份：</h3>
+                <ul id="abnormal-analysis"></ul>
+            </div>
+        </div>
+        
+        <!-- 4. 四大预算部门分析 -->
+        <div class="section">
+            <div class="section-header">
+                <h2>4. 费用最多的四个预算部门分析</h2>
+            </div>
+            <div class="department-selector">
+                <div class="department-buttons">
+                    <button class="dept-btn active" data-dept="交付中心">交付中心</button>
+                    <button class="dept-btn" data-dept="华南事业部">华南事业部</button>
+                    <button class="dept-btn" data-dept="甄选部">甄选部</button>
+                    <button class="dept-btn" data-dept="销售部">销售部</button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div id="dept-trend-chart" class="chart"></div>
+                <div id="dept-comparison-chart" class="chart"></div>
+                <div class="analysis-text">
+                    <h3 id="dept-analysis-title">交付中心 - 异常差旅月份分析：</h3>
+                    <ul id="dept-abnormal-analysis"></ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 麦肯锡式洞察分析 -->
+        <div class="section insights">
+            <div class="section-header">
+                <h2>📊 麦肯锡式洞察分析</h2>
+            </div>
+            <div class="insights-content">
+                <h3>🔍 核心发现</h3>
+                <p>基于2024年1月至2025年6月的差旅费用数据分析，我们识别出以下关键洞察：</p>
+                
+                <h3>📈 业务增长驱动因素</h3>
+                <ul class="insights-list">
+                    <li><strong>整体增长态势：</strong>2025年上半年差旅费用同比增长19.2%，显示业务扩张强劲</li>
+                    <li><strong>季节性规律：</strong>春节效应导致2月费用下降57%，3月反弹150%，体现明显的周期性特征</li>
+                    <li><strong>部门差异化：</strong>交付中心（25.8%占比）和华南事业部（19.6%占比）是差旅投入的核心驱动力</li>
+                </ul>
+                
+                <h3>⚠️ 风险与机会识别</h3>
+                <ul class="insights-list">
+                    <li><strong>成本控制风险：</strong>甄选部2月同比增长138.7%，需关注招聘策略的成本效益</li>
+                    <li><strong>业务机会：</strong>华南事业部持续高投入反映市场扩张潜力，建议加大资源倾斜</li>
+                    <li><strong>效率优化：</strong>交付中心作为最大费用部门，应重点关注项目交付效率提升</li>
+                </ul>
+                
+                <h3>🎯 战略建议</h3>
+                <ul class="insights-list">
+                    <li><strong>预算规划：</strong>建立基于历史数据的季节性预算模型，合理分配全年差旅资源</li>
+                    <li><strong>数字化转型：</strong>在疫情常态化背景下，推进远程协作工具，优化差旅必要性评估</li>
+                    <li><strong>ROI监控：</strong>建立差旅费用与业务成果的关联分析，提升投入产出比</li>
+                    <li><strong>区域策略：</strong>基于华南事业部的高增长，考虑在核心区域设立分支机构以降低差旅成本</li>
+                </ul>
+                
+                <h3>📊 关键绩效指标建议</h3>
+                <p>建议建立以下KPI体系进行持续监控：差旅费用增长率、单次差旅平均成本、差旅ROI、部门费用占比变化等，以实现精细化管理和成本优化。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 等待ECharts加载完成的函数
+        function waitForECharts(callback, timeout = 10000) {
+            const startTime = Date.now();
+            
+            function check() {
+                if (typeof echarts !== 'undefined') {
+                    callback();
+                } else if (Date.now() - startTime < timeout) {
+                    setTimeout(check, 100);
+                } else {
+                    console.error('ECharts加载超时');
+                    showError('echarts-loading-error', 'ECharts库加载失败，请刷新页面重试');
+                }
+            }
+            check();
+        }
+
+        // 错误显示函数
+        function showError(containerId, message) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = `<div class="error">${message}</div>`;
+            }
+        }
+
+        // 显示加载状态
+        function showLoading(containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div class="loading">图表加载中...</div>';
+            }
+        }
+
+        // 数据定义
+        const data = {
+            // 公司整体月度数据
+            monthlyData: [
+                {month: "2024-01", total: 509781, depts: [
+                    {name: "交付中心", value: 128038}, {name: "甄选部", value: 98521}, 
+                    {name: "华南事业部", value: 75144}, {name: "运营部", value: 52939}, 
+                    {name: "销售部", value: 52263}, {name: "客户成功中心", value: 34768}, 
+                    {name: "营销部", value: 25802}, {name: "创新中心", value: 18845}, 
+                    {name: "产品研发中心", value: 14485}, {name: "其他", value: 8976}
+                ]},
+                {month: "2024-02", total: 218044, depts: [
+                    {name: "交付中心", value: 48487}, {name: "华南事业部", value: 37166}, 
+                    {name: "运营部", value: 32119}, {name: "销售部", value: 27449}, 
+                    {name: "甄选部", value: 23277}, {name: "营销部", value: 21598}, 
+                    {name: "创新中心", value: 10398}, {name: "其他", value: 17550}
+                ]},
+                {month: "2024-03", total: 545650, depts: [
+                    {name: "交付中心", value: 141204}, {name: "华南事业部", value: 121907}, 
+                    {name: "销售部", value: 65217}, {name: "营销部", value: 44578}, 
+                    {name: "运营部", value: 42537}, {name: "甄选部", value: 42134}, 
+                    {name: "客户成功中心", value: 40210}, {name: "其他", value: 47863}
+                ]},
+                {month: "2024-04", total: 602534, depts: [
+                    {name: "交付中心", value: 125961}, {name: "销售部", value: 125400}, 
+                    {name: "华南事业部", value: 89153}, {name: "客户成功中心", value: 65407}, 
+                    {name: "运营部", value: 55178}, {name: "营销部", value: 47754}, 
+                    {name: "甄选部", value: 29931}, {name: "其他", value: 63750}
+                ]},
+                {month: "2024-05", total: 579108, depts: [
+                    {name: "交付中心", value: 147527}, {name: "华南事业部", value: 98425}, 
+                    {name: "甄选部", value: 96733}, {name: "销售部", value: 61762}, 
+                    {name: "营销部", value: 45622}, {name: "客户成功中心", value: 38951}, 
+                    {name: "运营部", value: 31275}, {name: "其他", value: 58813}
+                ]},
+                {month: "2024-06", total: 580480, depts: [
+                    {name: "交付中心", value: 186697}, {name: "华南事业部", value: 118399}, 
+                    {name: "甄选部", value: 71373}, {name: "销售部", value: 62899}, 
+                    {name: "客户成功中心", value: 51086}, {name: "营销部", value: 39627}, 
+                    {name: "运营部", value: 22397}, {name: "其他", value: 28002}
+                ]},
+                {month: "2025-01", total: 595875, depts: [
+                    {name: "甄选部", value: 156698}, {name: "交付中心", value: 125716}, 
+                    {name: "华南事业部", value: 124070}, {name: "销售部", value: 50361}, 
+                    {name: "营销部", value: 42588}, {name: "客户成功中心", value: 35201}, 
+                    {name: "运营部", value: 25987}, {name: "其他", value: 35254}
+                ]},
+                {month: "2025-02", total: 353095, depts: [
+                    {name: "交付中心", value: 91375}, {name: "华南事业部", value: 72149}, 
+                    {name: "销售部", value: 58043}, {name: "甄选部", value: 55551}, 
+                    {name: "营销部", value: 32461}, {name: "客户成功中心", value: 19783}, 
+                    {name: "运营部", value: 10986}, {name: "其他", value: 12747}
+                ]},
+                {month: "2025-03", total: 677405, depts: [
+                    {name: "交付中心", value: 205303}, {name: "华南事业部", value: 122673}, 
+                    {name: "甄选部", value: 96175}, {name: "销售部", value: 90098}, 
+                    {name: "营销部", value: 56892}, {name: "客户成功中心", value: 44951}, 
+                    {name: "运营部", value: 26904}, {name: "其他", value: 34409}
+                ]},
+                {month: "2025-04", total: 597626, depts: [
+                    {name: "交付中心", value: 154421}, {name: "华南事业部", value: 96764}, 
+                    {name: "销售部", value: 83861}, {name: "甄选部", value: 72856}, 
+                    {name: "营销部", value: 68394}, {name: "客户成功中心", value: 48692}, 
+                    {name: "运营部", value: 36982}, {name: "其他", value: 35656}
+                ]},
+                {month: "2025-05", total: 599107, depts: [
+                    {name: "交付中心", value: 150431}, {name: "华南事业部", value: 125191}, 
+                    {name: "甄选部", value: 68842}, {name: "销售部", value: 60087}, 
+                    {name: "营销部", value: 59988}, {name: "客户成功中心", value: 57913}, 
+                    {name: "运营部", value: 39329}, {name: "其他", value: 37326}
+                ]},
+                {month: "2025-06", total: 707147, depts: [
+                    {name: "交付中心", value: 198318}, {name: "华南事业部", value: 121888}, 
+                    {name: "销售部", value: 76116}, {name: "甄选部", value: 64351}, 
+                    {name: "营销部", value: 63227}, {name: "客户成功中心", value: 62004}, 
+                    {name: "运营部", value: 56854}, {name: "其他", value: 64389}
+                ]}
+            ],
+            
+            // 同比数据
+            comparisonData: [
+                {month: "1月", "2024": 509781, "2025": 595875},
+                {month: "2月", "2024": 218044, "2025": 353095},
+                {month: "3月", "2024": 545650, "2025": 677405},
+                {month: "4月", "2024": 602534, "2025": 597626},
+                {month: "5月", "2024": 579108, "2025": 599107},
+                {month: "6月", "2024": 580480, "2025": 707147}
+            ],
+            
+            // 部门数据
+            deptData: {
+                "交付中心": {
+                    monthly: [128038, 48487, 141204, 125961, 147527, 186697, 125716, 91375, 205303, 154421, 150431, 198318],
+                    comparison: [{month: "1月", "2024": 128038, "2025": 125716}, {month: "2月", "2024": 48487, "2025": 91375}, 
+                                {month: "3月", "2024": 141204, "2025": 205303}, {month: "4月", "2024": 125961, "2025": 154421}, 
+                                {month: "5月", "2024": 147527, "2025": 150431}, {month: "6月", "2024": 186697, "2025": 198318}]
+                },
+                "华南事业部": {
+                    monthly: [75144, 37166, 121907, 89153, 98425, 118399, 124070, 72149, 122673, 96764, 125191, 121888],
+                    comparison: [{month: "1月", "2024": 75144, "2025": 124070}, {month: "2月", "2024": 37166, "2025": 72149}, 
+                                {month: "3月", "2024": 121907, "2025": 122673}, {month: "4月", "2024": 89153, "2025": 96764}, 
+                                {month: "5月", "2024": 98425, "2025": 125191}, {month: "6月", "2024": 118399, "2025": 121888}]
+                },
+                "甄选部": {
+                    monthly: [98521, 23277, 42134, 29931, 96733, 71373, 156698, 55551, 96175, 72856, 68842, 64351],
+                    comparison: [{month: "1月", "2024": 98521, "2025": 156698}, {month: "2月", "2024": 23277, "2025": 55551}, 
+                                {month: "3月", "2024": 42134, "2025": 96175}, {month: "4月", "2024": 29931, "2025": 72856}, 
+                                {month: "5月", "2024": 96733, "2025": 68842}, {month: "6月", "2024": 71373, "2025": 64351}]
+                },
+                "销售部": {
+                    monthly: [52263, 27449, 65217, 125400, 61762, 62899, 50361, 58043, 90098, 83861, 60087, 76116],
+                    comparison: [{month: "1月", "2024": 52263, "2025": 50361}, {month: "2月", "2024": 27449, "2025": 58043}, 
+                                {month: "3月", "2024": 65217, "2025": 90098}, {month: "4月", "2024": 125400, "2025": 83861}, 
+                                {month: "5月", "2024": 61762, "2025": 60087}, {month: "6月", "2024": 62899, "2025": 76116}]
+                }
+            }
+        };
+
+        // 异常月份数据
+        const abnormalMonths = [
+            "2024年2月：环比下降57.2%（春节假期影响，差旅活动大幅减少）",
+            "2024年3月：环比增长150.3%（春节后业务恢复，差旅需求集中释放）",
+            "2024年4月：环比增长10.4%（业务正常化，差旅费用稳步增长）",
+            "2025年1月：同比增长16.9%（业务扩张带动差旅需求增长）",
+            "2025年2月：同比增长61.9%（相比2024年春节低基数，差旅活动显著增加）",
+            "2025年3月：同比增长24.1%（业务发展推动差旅费用同比大幅增长）",
+            "2025年6月：同比增长21.8%（年中冲刺阶段，差旅活动增加）"
+        ];
+
+        const deptAbnormalData = {
+            "交付中心": [
+                "2024年2月：环比下降62.1%（春节期间交付活动暂停）",
+                "2024年3月：环比增长191.2%（春节后项目交付集中进行）",
+                "2025年2月：同比增长88.4%（春节影响减小，项目交付需求提升）",
+                "2025年3月：同比增长45.4%（大型项目交付推动差旅费用激增）"
+            ],
+            "华南事业部": [
+                "2024年2月：环比下降50.5%（春节期间华南地区业务活动减少）",
+                "2024年3月：环比增长228.0%（华南市场开拓和客户拜访集中）",
+                "2025年1月：同比增长65.1%（华南事业部业务扩张）",
+                "2025年2月：同比增长94.1%（相比去年春节期间业务恢复更快）"
+            ],
+            "甄选部": [
+                "2024年2月：环比下降76.4%（春节期间人才甄选工作暂停）",
+                "2024年5月：环比增长223.2%（春招高峰期，人才甄选活动密集）",
+                "2025年1月：同比增长59.0%（年初人才需求计划启动，甄选活动增加）",
+                "2025年2月：同比增长138.7%（相比去年春节期间招聘需求大幅提升）"
+            ],
+            "销售部": [
+                "2024年2月：环比下降47.5%（春节期间销售活动减少）",
+                "2024年3月：环比增长137.6%（Q1冲刺和春节后客户拜访集中）",
+                "2024年4月：环比增长92.3%（新财年销售目标推动，客户开发活跃）",
+                "2025年2月：同比增长111.4%（相比去年春节期间销售活动显著增加）"
+            ]
+        };
+
+        // 图表管理器
+        const chartManager = {
+            charts: new Map(),
+            
+            createChart(containerId, options) {
+                try {
+                    const container = document.getElementById(containerId);
+                    if (!container || container.offsetWidth === 0 || container.offsetHeight === 0) {
+                        throw new Error(`容器 ${containerId} 不存在或尺寸无效`);
+                    }
+                    
+                    const chart = echarts.init(container);
+                    chart.setOption(options);
+                    this.charts.set(containerId, chart);
+                    
+                    // 添加resize监听
+                    const resizeHandler = debounce(() => {
+                        if (chart && !chart.isDisposed()) {
+                            chart.resize();
+                        }
+                    }, 100);
+                    
+                    window.addEventListener('resize', resizeHandler);
+                    
+                    return chart;
+                } catch (error) {
+                    console.error(`创建图表失败 (${containerId}):`, error);
+                    showError(containerId, `图表创建失败: ${error.message}`);
+                    return null;
+                }
+            },
+            
+            dispose() {
+                this.charts.forEach((chart, id) => {
+                    if (chart && !chart.isDisposed()) {
+                        chart.dispose();
+                    }
+                });
+                this.charts.clear();
+            }
+        };
+
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // 格式化数字
+        function formatNumber(num) {
+            return (num / 10000).toFixed(1) + '万';
+        }
+
+        // 创建整体趋势图表
+        function createOverallChart() {
+            const months = data.monthlyData.map(d => d.month.substring(5));
+            const totals = data.monthlyData.map(d => d.total);
+            
+            // 计算环比增长率
+            const growthRates = [];
+            for (let i = 1; i < totals.length; i++) {
+                const rate = ((totals[i] - totals[i-1]) / totals[i-1] * 100);
+                growthRates.push(rate);
+            }
+
+            // 获取所有部门名称
+            const allDepts = new Set();
+            data.monthlyData.forEach(monthData => {
+                monthData.depts.forEach(dept => allDepts.add(dept.name));
+            });
+            const deptNames = Array.from(allDepts);
+
+            // 构建堆叠数据
+            const series = deptNames.map(deptName => ({
+                name: deptName,
+                type: 'bar',
+                stack: 'total',
+                data: data.monthlyData.map(monthData => {
+                    const dept = monthData.depts.find(d => d.name === deptName);
+                    return dept ? dept.value : 0;
+                }),
+                itemStyle: {
+                    borderRadius: deptName === deptNames[deptNames.length - 1] ? [3, 3, 0, 0] : [0, 0, 0, 0]
+                }
+            }));
+
+            // 添加折线图
+            series.push({
+                name: '环比增长率',
+                type: 'line',
+                yAxisIndex: 1,
+                data: [null, ...growthRates],
+                lineStyle: {
+                    color: '#ff4757',
+                    width: 3
+                },
+                itemStyle: {
+                    color: '#ff4757'
+                },
+                symbol: 'circle',
+                symbolSize: 8
+            });
+
+            const options = {
+                title: {
+                    text: '公司整体差旅金额趋势分析',
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                    }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    },
+                    formatter: function(params) {
+                        let result = `<strong>${params[0].axisValue}</strong><br/>`;
+                        let total = 0;
+                        
+                        params.forEach(param => {
+                            if (param.seriesName !== '环比增长率') {
+                                total += param.value;
+                                result += `${param.marker}${param.seriesName}: ${formatNumber(param.value)}<br/>`;
+                            }
+                        });
+                        
+                        result += `<strong>月度总额: ${formatNumber(total)}</strong><br/>`;
+                        
+                        const growthParam = params.find(p => p.seriesName === '环比增长率');
+                        if (growthParam && growthParam.value !== null) {
+                            result += `${growthParam.marker}环比增长率: ${growthParam.value.toFixed(1)}%`;
+                        }
+                        
+                        return result;
+                    }
+                },
+                legend: {
+                    type: 'scroll',
+                    top: 40,
+                    data: [...deptNames, '环比增长率']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    top: '15%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: months,
+                    axisLabel: {
+                        rotate: 45
+                    }
+                },
+                yAxis: [
+                    {
+                        type: 'value',
+                        name: '金额(万元)',
+                        axisLabel: {
+                            formatter: function(value) {
+                                return formatNumber(value);
+                            }
+                        }
+                    },
+                    {
+                        type: 'value',
+                        name: '增长率(%)',
+                        position: 'right',
+                        axisLabel: {
+                            formatter: '{value}%'
+                        }
+                    }
+                ],
+                series: series
+            };
+
+            chartManager.createChart('overall-chart', options);
+        }
+
+        // 创建同比对比图表
+        function createComparisonChart() {
+            const options = {
+                title: {
+                    text: '年度同比分析（2024年 vs 2025年 1-6月）',
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 18,
+                        fontWeight: 'bold'
+                    }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function(params) {
+                        let result = `<strong>${params[0].axisValue}</strong><br/>`;
+                        params.forEach(param => {
+                            result += `${param.marker}${param.seriesName}: ${formatNumber(param.value)}<br/>`;
+                        });
+                        if (params.length === 2) {
+                            const growth = ((params[1].value - params[0].value) / params[0].value * 100);
+                            result += `<strong>同比增长: ${growth > 0 ? '+' : ''}${growth.toFixed(1)}%</strong>`;
+                        }
+                        return result;
+                    }
+                },
+                legend: {
+                    data: ['2024年', '2025年'],
+                    top: 40
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    top: '15%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.comparisonData.map(d => d.month)
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '金额(万元)',
+                    axisLabel: {
+                        formatter: function(value) {
+                            return formatNumber(value);
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: '2024年',
+                        type: 'bar',
+                        data: data.comparisonData.map(d => d['2024']),
+                        itemStyle: {
+                            color: '#5470c6',
+                            borderRadius: [3, 3, 0, 0]
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                return formatNumber(params.value);
+                            }
+                        }
+                    },
+                    {
+                        name: '2025年',
+                        type: 'bar',
+                        data: data.comparisonData.map(d => d['2025']),
+                        itemStyle: {
+                            color: '#91cc75',
+                            borderRadius: [3, 3, 0, 0]
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                return formatNumber(params.value);
+                            }
+                        }
+                    }
+                ]
+            };
+
+            chartManager.createChart('comparison-chart', options);
+        }
+
+        // 创建部门趋势图表
+        function createDeptTrendChart(deptName) {
+            const months = ['01', '02', '03', '04', '05', '06', '01', '02', '03', '04', '05', '06'];
+            const years = ['2024', '2024', '2024', '2024', '2024', '2024', '2025', '2025', '2025', '2025', '2025', '2025'];
+            const xAxisData = months.map((month, index) => `${years[index]}-${month}`);
+            
+            const options = {
+                title: {
+                    text: `${deptName} - 月度差旅费用趋势`,
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 16,
+                        fontWeight: 'bold'
+                    }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const param = params[0];
+                        return `<strong>${param.axisValue}</strong><br/>${param.seriesName}: ${formatNumber(param.value)}`;
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    top: '15%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: xAxisData,
+                    axisLabel: {
+                        rotate: 45
+                    }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '金额(万元)',
+                    axisLabel: {
+                        formatter: function(value) {
+                            return formatNumber(value);
+                        }
+                    }
+                },
+                series: [{
+                    name: deptName,
+                    type: 'line',
+                    data: data.deptData[deptName].monthly,
+                    smooth: true,
+                    lineStyle: {
+                        color: '#5470c6',
+                        width: 3
+                    },
+                    itemStyle: {
+                        color: '#5470c6'
+                    },
+                    symbol: 'circle',
+                    symbolSize: 8,
+                    areaStyle: {
+                        color: {
+                            type: 'linear',
+                            x: 0, y: 0, x2: 0, y2: 1,
+                            colorStops: [
+                                {offset: 0, color: 'rgba(84, 112, 198, 0.3)'},
+                                {offset: 1, color: 'rgba(84, 112, 198, 0.1)'}
+                            ]
+                        }
+                    }
+                }]
+            };
+
+            chartManager.createChart('dept-trend-chart', options);
+        }
+
+        // 创建部门同比图表
+        function createDeptComparisonChart(deptName) {
+            const options = {
+                title: {
+                    text: `${deptName} - 年度同比分析`,
+                    left: 'center',
+                    textStyle: {
+                        fontSize: 16,
+                        fontWeight: 'bold'
+                    }
+                },
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    },
+                    formatter: function(params) {
+                        let result = `<strong>${params[0].axisValue}</strong><br/>`;
+                        params.forEach(param => {
+                            result += `${param.marker}${param.seriesName}: ${formatNumber(param.value)}<br/>`;
+                        });
+                        if (params.length === 2) {
+                            const growth = ((params[1].value - params[0].value) / params[0].value * 100);
+                            result += `<strong>同比增长: ${growth > 0 ? '+' : ''}${growth.toFixed(1)}%</strong>`;
+                        }
+                        return result;
+                    }
+                },
+                legend: {
+                    data: ['2024年', '2025年'],
+                    top: 40
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    top: '15%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.deptData[deptName].comparison.map(d => d.month)
+                },
+                yAxis: {
+                    type: 'value',
+                    name: '金额(万元)',
+                    axisLabel: {
+                        formatter: function(value) {
+                            return formatNumber(value);
+                        }
+                    }
+                },
+                series: [
+                    {
+                        name: '2024年',
+                        type: 'bar',
+                        data: data.deptData[deptName].comparison.map(d => d['2024']),
+                        itemStyle: {
+                            color: '#5470c6',
+                            borderRadius: [3, 3, 0, 0]
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                return formatNumber(params.value);
+                            }
+                        }
+                    },
+                    {
+                        name: '2025年',
+                        type: 'bar',
+                        data: data.deptData[deptName].comparison.map(d => d['2025']),
+                        itemStyle: {
+                            color: '#91cc75',
+                            borderRadius: [3, 3, 0, 0]
+                        },
+                        label: {
+                            show: true,
+                            position: 'top',
+                            formatter: function(params) {
+                                return formatNumber(params.value);
+                            }
+                        }
+                    }
+                ]
+            };
+
+            chartManager.createChart('dept-comparison-chart', options);
+        }
+
+        // 更新部门分析
+        function updateDeptAnalysis(deptName) {
+            // 更新图表
+            createDeptTrendChart(deptName);
+            createDeptComparisonChart(deptName);
+            
+            // 更新异常分析文本
+            const titleElement = document.getElementById('dept-analysis-title');
+            const listElement = document.getElementById('dept-abnormal-analysis');
+            
+            if (titleElement) {
+                titleElement.textContent = `${deptName} - 异常差旅月份分析：`;
+            }
+            
+            if (listElement) {
+                listElement.innerHTML = '';
+                deptAbnormalData[deptName].forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    listElement.appendChild(li);
+                });
+            }
+        }
+
+        // 初始化异常月份分析
+        function initAbnormalAnalysis() {
+            const listElement = document.getElementById('abnormal-analysis');
+            if (listElement) {
+                abnormalMonths.forEach(item => {
+                    const li = document.createElement('li');
+                    li.textContent = item;
+                    listElement.appendChild(li);
+                });
+            }
+        }
+
+        // 初始化部门选择器
+        function initDeptSelector() {
+            const buttons = document.querySelectorAll('.dept-btn');
+            buttons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 更新按钮状态
+                    buttons.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // 更新部门分析
+                    const deptName = btn.dataset.dept;
+                    updateDeptAnalysis(deptName);
+                });
+            });
+        }
+
+        // 主初始化函数
+        function initCharts() {
+            try {
+                showLoading('overall-chart');
+                showLoading('comparison-chart');
+                showLoading('dept-trend-chart');
+                showLoading('dept-comparison-chart');
+                
+                // 创建图表
+                createOverallChart();
+                createComparisonChart();
+                
+                // 初始化异常分析
+                initAbnormalAnalysis();
+                
+                // 初始化部门选择器和默认部门图表
+                initDeptSelector();
+                updateDeptAnalysis('交付中心');
+                
+                console.log('所有图表初始化完成');
+            } catch (error) {
+                console.error('图表初始化失败:', error);
+                showError('overall-chart', '图表初始化失败: ' + error.message);
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            waitForECharts(initCharts);
+        });
+
+        // 页面卸载时清理资源
+        window.addEventListener('beforeunload', () => {
+            chartManager.dispose();
+        });
+    </script>
+</body>
+</html>
